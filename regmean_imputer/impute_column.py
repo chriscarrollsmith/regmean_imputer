@@ -63,8 +63,11 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     """
     
     # Create an indicator column for imputed values in both datasets using .loc to avoid SettingWithCopyWarning
+    # Use .copy() to create a deep copy of the dataframes to avoid SettingWithCopyWarning
     indicator_col_name = f"{impute_col}_Imputed"
+    train_data = train_data.copy()
     train_data.loc[:, indicator_col_name] = train_data[impute_col].isnull().astype(dtype=int)
+    test_data = test_data.copy()
     test_data.loc[:, indicator_col_name] = test_data[impute_col].isnull().astype(dtype=int)
 
     # Compute the global mean of the target column once using the training dataset

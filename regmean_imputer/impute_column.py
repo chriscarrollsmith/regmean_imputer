@@ -6,23 +6,29 @@ import pandas as pd
 
 def impute_with_regularization(m, train_data, test_data, impute_col, group_by_cols, global_mean) -> pd.DataFrame:
     """Compute regularized mean for imputation."""
-    # Combine the train and test datasets
-    data = pd.concat([train_data, test_data])
     
     def regularized_mean(group) -> float:
         n = len(group)
         sample_mean = group.mean()
         return (n * sample_mean + m * global_mean) / (n + m)
+
+    # Calculate regularized means only from the training data
+    regularized_means_train = train_data.groupby(group_by_cols)[impute_col].transform(regularized_mean) if not train_data.empty else pd.Series()
+    regularized_means_train.fillna(global_mean, inplace=True)
+
+    # Map the regularized means from the training set to the test set
+    # Exclude groups with NaN values from the mapping
+    mapping = train_data.dropna(subset=[impute_col]).groupby(group_by_cols)[impute_col].apply(regularized_mean).to_dict() if not train_data.empty else {}
     
-    regularized_means = data.groupby(group_by_cols)[impute_col].transform(regularized_mean)
-    
+    regularized_means_test = test_data[group_by_cols].apply(lambda row: mapping.get(tuple(row), global_mean), axis=1) if not test_data.empty else pd.Series()
+
     # Replace NaN values in regularized_means with global_mean
-    regularized_means.fillna(global_mean, inplace=True)
-    
-    # Split the imputed data back into train and test datasets
-    imputed_data_train = data.iloc[:len(train_data)][impute_col].fillna(regularized_means)
-    imputed_data_test = data.iloc[len(train_data):][impute_col].fillna(regularized_means)
-    
+    regularized_means_test.fillna(global_mean, inplace=True)
+
+    # Impute the training data and test data
+    imputed_data_train = train_data[impute_col].fillna(regularized_means_train) if not train_data.empty else pd.Series()
+    imputed_data_test = test_data[impute_col].fillna(regularized_means_test) if not test_data.empty else pd.Series()
+
     return imputed_data_train, imputed_data_test
 
 
@@ -46,7 +52,7 @@ def evaluate_regularization(m, non_missing_data, train_idx, test_idx, impute_col
     return mse
 
 
-def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5):
+def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5, verbose=True):
     """
     Impute missing values in a column using regularized means.
     
@@ -87,11 +93,11 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
 
     # Get the best regularization parameter
     best_m = m_values[mean_mse_scores.index(min(mean_mse_scores))]
-    print(f"Best regularization parameter for {impute_col}: {best_m}")
+    if verbose:
+        print(f"Best regularization parameter for {impute_col}: {best_m}")
 
     # Calculate the imputed values for the training and testing datasets separately using the best regularization parameter
-    imputed_values_train, _ = impute_with_regularization(m=best_m, train_data=train_data, test_data=pd.DataFrame(), impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
-    _, imputed_values_test = impute_with_regularization(m=best_m, train_data=pd.DataFrame(), test_data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    imputed_values_train, imputed_values_test = impute_with_regularization(m=best_m, train_data=train_data, test_data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
 
     # Fill the missing values in the target column in the training and testing datasets with the imputed values using .loc to avoid SettingWithCopyWarning
     train_data.loc[:, impute_col] = train_data[impute_col].fillna(value=imputed_values_train)

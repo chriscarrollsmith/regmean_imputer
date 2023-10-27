@@ -18,7 +18,7 @@ pip install regmean-imputer
 
 ## Usage
 
-### Standalone Imputation using `impute_column` with separate train and test data:
+### Imputation using `impute_column` with separate train and test data:
 
 ```python
 from regmean_imputer import impute_column
@@ -56,7 +56,8 @@ This approach of separating the train and test data before imputation is crucial
 - `group_by_cols` (list): Columns used for grouping to compute the regularized mean.
 - `m_values` (list, optional): List of regularization parameters to be tested for optimal performance. Default is [1,2,3,4,5,6,7,8,9,10].
 - `n_splits` (int, optional): Number of splits for cross-validation during regularization evaluation. Default is 5.
-- `verbose` (bool, optional): Whether to print progress messages. Default is False.
+- `verbose` (bool, optional): Whether to print the best regularization parameter. Default is False.
+- `random_state` (int, optional): Random state for cross-validation. Default is None.
 
 ## Conclusion
 

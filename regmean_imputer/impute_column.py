@@ -38,30 +38,32 @@ def evaluate_regularization(m, non_missing_data, train_idx, test_idx, impute_col
     return mse
 
 
-def impute_column(data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5):
+def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5):
     """
     Impute missing values in a column using regularized means.
     
     Args:
-    - data (pd.DataFrame): The dataset.
+    - train_data (pd.DataFrame): The training dataset.
+    - test_data (pd.DataFrame): The testing dataset.
     - impute_col (str): The column name to impute.
     - group_by_cols (list): List of column names to group by for calculating regularized mean.
     - m_values (list): List of regularization parameters to try.
     - n_splits (int): Number of splits for KFold cross-validation.
     
     Returns:
-    - pd.DataFrame: Dataset with imputed values.
+    - tuple: Tuple of training and testing datasets with imputed values.
     """
     
-    # Create an indicator column for imputed values
+    # Create an indicator column for imputed values in both datasets
     indicator_col_name = f"{impute_col}_Imputed"
-    data[indicator_col_name] = data[impute_col].isnull().astype(dtype=int)
+    train_data[indicator_col_name] = train_data[impute_col].isnull().astype(dtype=int)
+    test_data[indicator_col_name] = test_data[impute_col].isnull().astype(dtype=int)
 
-    # Compute the global mean of the target column once using the entire dataset
-    global_mean = data[impute_col].mean()
+    # Compute the global mean of the target column once using the training dataset
+    global_mean = train_data[impute_col].mean()
 
-    # Filter rows where target column value is present
-    non_missing_data = data[data[impute_col].notna()]
+    # Filter rows where target column value is present in the training dataset
+    non_missing_data = train_data[train_data[impute_col].notna()]
     
     kf = KFold(n_splits=n_splits, shuffle=True)
     mean_mse_scores = []
@@ -74,10 +76,12 @@ def impute_column(data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,1
     best_m = m_values[mean_mse_scores.index(min(mean_mse_scores))]
     print(f"Best regularization parameter for {impute_col}: {best_m}")
 
-    # Calculate the imputed values for the entire dataset using the best regularization parameter
-    imputed_values = impute_with_regularization(m=best_m, data=data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    # Calculate the imputed values for the training and testing datasets separately using the best regularization parameter
+    imputed_values_train = impute_with_regularization(m=best_m, data=train_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    imputed_values_test = impute_with_regularization(m=best_m, data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
 
-    # Fill the missing values in the target column with the imputed values
-    data[impute_col] = data[impute_col].fillna(value=imputed_values)
+    # Fill the missing values in the target column in the training and testing datasets with the imputed values
+    train_data[impute_col] = train_data[impute_col].fillna(value=imputed_values_train)
+    test_data[impute_col] = test_data[impute_col].fillna(value=imputed_values_test)
     
-    return data
+    return train_data, test_data

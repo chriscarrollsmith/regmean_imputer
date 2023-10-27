@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "custom-imputers"
+name = "regmean-imputer"
 version = "0.1.0"
-description = "Custom imputer classes for use in sklearn pipelines"
+description = "Regularized mean imputation functions for imputing numerical data by grouped categoricals"
 authors = ["Christopher Carroll Smith <75859865+chriscarrollsmith@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "custom_imputers" }
+    { include = "regmean_imputer" }
 ]
 
 [tool.poetry.dependencies]

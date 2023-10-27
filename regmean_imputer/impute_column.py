@@ -87,8 +87,8 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     print(f"Best regularization parameter for {impute_col}: {best_m}")
 
     # Calculate the imputed values for the training and testing datasets separately using the best regularization parameter
-    imputed_values_train = impute_with_regularization(m=best_m, data=train_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
-    imputed_values_test = impute_with_regularization(m=best_m, data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    imputed_values_train, _ = impute_with_regularization(m=best_m, train_data=train_data, test_data=pd.DataFrame(), impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    _, imputed_values_test = impute_with_regularization(m=best_m, train_data=pd.DataFrame(), test_data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
 
     # Fill the missing values in the target column in the training and testing datasets with the imputed values
     train_data[impute_col] = train_data[impute_col].fillna(value=imputed_values_train)

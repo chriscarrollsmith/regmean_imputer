@@ -62,10 +62,10 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     - tuple: Tuple of training and testing datasets with imputed values.
     """
     
-    # Create an indicator column for imputed values in both datasets
+    # Create an indicator column for imputed values in both datasets using .loc to avoid SettingWithCopyWarning
     indicator_col_name = f"{impute_col}_Imputed"
-    train_data[indicator_col_name] = train_data[impute_col].isnull().astype(dtype=int)
-    test_data[indicator_col_name] = test_data[impute_col].isnull().astype(dtype=int)
+    train_data.loc[:, indicator_col_name] = train_data[impute_col].isnull().astype(dtype=int)
+    test_data.loc[:, indicator_col_name] = test_data[impute_col].isnull().astype(dtype=int)
 
     # Compute the global mean of the target column once using the training dataset
     global_mean = train_data[impute_col].mean()
@@ -90,8 +90,8 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     imputed_values_train, _ = impute_with_regularization(m=best_m, train_data=train_data, test_data=pd.DataFrame(), impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
     _, imputed_values_test = impute_with_regularization(m=best_m, train_data=pd.DataFrame(), test_data=test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
 
-    # Fill the missing values in the target column in the training and testing datasets with the imputed values
-    train_data[impute_col] = train_data[impute_col].fillna(value=imputed_values_train)
-    test_data[impute_col] = test_data[impute_col].fillna(value=imputed_values_test)
+    # Fill the missing values in the target column in the training and testing datasets with the imputed values using .loc to avoid SettingWithCopyWarning
+    train_data.loc[:, impute_col] = train_data[impute_col].fillna(value=imputed_values_train)
+    test_data.loc[:, impute_col] = test_data[impute_col].fillna(value=imputed_values_test)
     
     return train_data, test_data

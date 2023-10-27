@@ -7,9 +7,9 @@ from regmean_imputer.impute_column import impute_with_regularization, impute_col
 @pytest.fixture
 def mock_data() -> pd.DataFrame:
     data = {
-        'Age': [25, np.nan, 30, 35, 40, np.nan, 45],
-        'Title': ['Mr', 'Mrs', 'Mr', 'Miss', 'Miss', 'Mrs', 'Mr'],
-        'Pclass': [1, 2, 1, 3, 3, 2, 1]
+        'Age': [25, np.nan, 30, 35, 40, np.nan, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+        'Title': ['Mr', 'Mrs', 'Mr', 'Miss', 'Miss', 'Mrs', 'Mr', 'Mr', 'Mrs', 'Mr', 'Miss', 'Miss', 'Mrs', 'Mr', 'Mr', 'Mrs', 'Mr', 'Miss'],
+        'Pclass': [1, 2, 1, 3, 3, 2, 1, 1, 2, 1, 3, 3, 2, 1, 1, 2, 1, 3]
     }
     return pd.DataFrame(data=data)
 
@@ -29,14 +29,16 @@ def test_impute_with_regularization(mock_data) -> None:
     assert not imputed_data_test.isnull().any(), "Imputation failed, NaN values found in test data"
 
 def test_evaluate_regularization(mock_data) -> None:
-    train_data = mock_data.iloc[:5]
-    test_data = mock_data.iloc[5:]
+    train_data = mock_data.iloc[:10]
+    test_data = mock_data.iloc[10:]
     non_missing_data = train_data[train_data['Age'].notna()].reset_index(drop=True)
+    train_idx = list(range(len(non_missing_data)//2))
+    test_idx = list(range(len(non_missing_data)//2, len(non_missing_data)))
     mse_score = evaluate_regularization(
             m=5,
             non_missing_data=non_missing_data,
-            train_idx=[0, 2, 3],
-            test_idx=[1, 4],
+            train_idx=train_idx,
+            test_idx=test_idx,
             impute_col='Age',
             group_by_cols=['Title', 'Pclass'],
             global_mean=train_data['Age'].mean()

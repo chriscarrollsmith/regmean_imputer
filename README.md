@@ -20,32 +20,44 @@ pip install regmean-imputer
 
 ### Usage
 
-#### 1. Standalone Imputation using `impute_column`:
+#### 1. Standalone Imputation using `impute_column` with separate train and test data:
 
 ```python
 from regmean_imputer import impute_column
 
-# Sample data
-data = {
-    'Age': [25, None, 30, 35, 40, None, 45],
-    'Title': ['Mr', 'Mrs', 'Mr', 'Miss', 'Miss', 'Mrs', 'Mr'],
-    'Pclass': [1, 2, 1, 3, 3, 2, 1]
+# Sample train data
+train_data = {
+    'Age': [25, None, 30, 35, 40],
+    'Title': ['Mr', 'Mrs', 'Mr', 'Miss', 'Miss'],
+    'Pclass': [1, 2, 1, 3, 3]
 }
-df = pd.DataFrame(data=data)
+
+# Sample test data
+test_data = {
+    'Age': [None, 45],
+    'Title': ['Mrs', 'Mr'],
+    'Pclass': [2, 1]
+}
+
+train_df = pd.DataFrame(data=train_data)
+test_df = pd.DataFrame(data=test_data)
 
 # Impute the 'Age' column using 'Title' and 'Pclass' as group by columns
-imputed_data = impute_column(data=df, impute_col='Age', group_by_cols=['Title', 'Pclass'])
-print(imputed_data)
+imputed_train_data, imputed_test_data = impute_column(train_data=train_df, test_data=test_df, impute_col='Age', group_by_cols=['Title', 'Pclass'])
+print(imputed_train_data)
+print(imputed_test_data)
 ```
+
+This approach of separating the train and test data before imputation is crucial in a machine learning preprocessing pipeline to prevent information leakage. Information leakage happens when information that would not be available at prediction time is used when building the model. This can lead to overly optimistic performance estimates. For example, if we impute missing values in the entire dataset using the mean of a column, the mean is influenced by the test set values, which wouldn't be available at prediction time in a real-world scenario.
 
 ### Parameters
 
-- `impute_col`: Column to be imputed.
-- `group_by_cols`: Columns used for grouping to compute the regularized mean.
-- `m_values`: List of regularization parameters to be tested for optimal performance.
-- `n_splits`: Number of splits for cross-validation during regularization evaluation.
-- `missing_values`: The placeholder for the missing values. Default is `np.nan`.
-- `add_indicator`: Whether to add an indicator column (or columns) that mark the missing values.
+- `train_data` (pd.DataFrame): The training dataset.
+- `test_data` (pd.DataFrame): The testing dataset.
+- `impute_col` (str): Column to be imputed.
+- `group_by_cols` (list): Columns used for grouping to compute the regularized mean.
+- `m_values` (list, optional): List of regularization parameters to be tested for optimal performance. Default is [1,2,3,4,5,6,7,8,9,10].
+- `n_splits` (int, optional): Number of splits for cross-validation during regularization evaluation. Default is 5.
 
 ### Conclusion
 

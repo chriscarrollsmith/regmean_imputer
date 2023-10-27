@@ -52,7 +52,7 @@ def evaluate_regularization(m, non_missing_data, train_idx, test_idx, impute_col
     return mse
 
 
-def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5, verbose=True):
+def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,2,3,4,5,6,7,8,9,10], n_splits=5, verbose=True, random_state=None):
     """
     Impute missing values in a column using regularized means.
     
@@ -63,6 +63,8 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     - group_by_cols (list): List of column names to group by for calculating regularized mean.
     - m_values (list): List of regularization parameters to try.
     - n_splits (int): Number of splits for KFold cross-validation.
+    - verbose (bool): Whether to print the best regularization parameter.
+    - random_state (int): Random state for KFold cross-validation.
     
     Returns:
     - tuple: Tuple of training and testing datasets with imputed values.
@@ -84,7 +86,7 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     
     # Ensure that the number of splits is not greater than the number of samples
     n_splits = min(n_splits, len(non_missing_data))
-    kf = KFold(n_splits=n_splits, shuffle=True)
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
     mean_mse_scores = []
 
     for m in m_values:

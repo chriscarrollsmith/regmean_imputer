@@ -38,7 +38,8 @@ def evaluate_regularization(m, non_missing_data, train_idx, test_idx, impute_col
     combined_data = pd.concat(objs=[train_data, masked_test_data])
     
     # Impute the "missing" values
-    imputed_values = impute_with_regularization(m=m, data=combined_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    imputed_values_train, imputed_values_test = impute_with_regularization(m=m, train_data=train_data, test_data=masked_test_data, impute_col=impute_col, group_by_cols=group_by_cols, global_mean=global_mean)
+    imputed_values = pd.concat([imputed_values_train, imputed_values_test])
     
     # Calculate the mean squared error between the imputed and actual values
     mse = mean_squared_error(y_true=test_data[impute_col], y_pred=imputed_values.iloc[len(train_data):])

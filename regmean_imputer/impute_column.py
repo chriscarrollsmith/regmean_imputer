@@ -4,8 +4,11 @@ import numpy as np
 import pandas as pd
 
 
-def impute_with_regularization(m, data, impute_col, group_by_cols, global_mean) -> pd.DataFrame:
+def impute_with_regularization(m, train_data, test_data, impute_col, group_by_cols, global_mean) -> pd.DataFrame:
     """Compute regularized mean for imputation."""
+    # Combine the train and test datasets
+    data = pd.concat([train_data, test_data])
+    
     def regularized_mean(group) -> float:
         n = len(group)
         sample_mean = group.mean()
@@ -16,7 +19,11 @@ def impute_with_regularization(m, data, impute_col, group_by_cols, global_mean) 
     # Replace NaN values in regularized_means with global_mean
     regularized_means.fillna(global_mean, inplace=True)
     
-    return data[impute_col].fillna(regularized_means)
+    # Split the imputed data back into train and test datasets
+    imputed_data_train = data.iloc[:len(train_data)][impute_col].fillna(regularized_means)
+    imputed_data_test = data.iloc[len(train_data):][impute_col].fillna(regularized_means)
+    
+    return imputed_data_train, imputed_data_test
 
 
 def evaluate_regularization(m, non_missing_data, train_idx, test_idx, impute_col, group_by_cols, global_mean) -> float:

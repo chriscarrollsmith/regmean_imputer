@@ -15,17 +15,23 @@ def mock_data() -> pd.DataFrame:
 
 
 def test_impute_with_regularization(mock_data) -> None:
-    imputed_data = impute_with_regularization(
+    train_data = mock_data.iloc[:5]
+    test_data = mock_data.iloc[5:]
+    imputed_data_train, imputed_data_test = impute_with_regularization(
             m=5,
-            data=mock_data,
+            train_data=train_data,
+            test_data=test_data,
             impute_col='Age',
             group_by_cols=['Title', 'Pclass'],
-            global_mean=mock_data['Age'].mean()
+            global_mean=train_data['Age'].mean()
         )
-    assert not imputed_data.isnull().any(), "Imputation failed, NaN values found"
-    
+    assert not imputed_data_train.isnull().any(), "Imputation failed, NaN values found in train data"
+    assert not imputed_data_test.isnull().any(), "Imputation failed, NaN values found in test data"
+
 def test_evaluate_regularization(mock_data) -> None:
-    non_missing_data = mock_data[mock_data['Age'].notna()].reset_index(drop=True)
+    train_data = mock_data.iloc[:5]
+    test_data = mock_data.iloc[5:]
+    non_missing_data = train_data[train_data['Age'].notna()].reset_index(drop=True)
     mse_score = evaluate_regularization(
             m=5,
             non_missing_data=non_missing_data,
@@ -33,15 +39,20 @@ def test_evaluate_regularization(mock_data) -> None:
             test_idx=[1, 4],
             impute_col='Age',
             group_by_cols=['Title', 'Pclass'],
-            global_mean=mock_data['Age'].mean()
+            global_mean=train_data['Age'].mean()
             )
     assert isinstance(mse_score, float), "Function should return a float MSE value"
 
 def test_impute_column(mock_data) -> None:
-    imputed_dataset = impute_column(
-            data=mock_data,
+    train_data = mock_data.iloc[:5]
+    test_data = mock_data.iloc[5:]
+    imputed_dataset_train, imputed_dataset_test = impute_column(
+            train_data=train_data,
+            test_data=test_data,
             impute_col='Age',
             group_by_cols=['Title', 'Pclass']
         )
-    assert not imputed_dataset['Age'].isnull().any(), "Imputation failed, NaN values found in Age column"
-    assert 'Age_Imputed' in imputed_dataset.columns, "Indicator column not found in the returned dataframe"
+    assert not imputed_dataset_train['Age'].isnull().any(), "Imputation failed, NaN values found in Age column of train data"
+    assert not imputed_dataset_test['Age'].isnull().any(), "Imputation failed, NaN values found in Age column of test data"
+    assert 'Age_Imputed' in imputed_dataset_train.columns, "Indicator column not found in the returned train dataframe"
+    assert 'Age_Imputed' in imputed_dataset_test.columns, "Indicator column not found in the returned test dataframe"

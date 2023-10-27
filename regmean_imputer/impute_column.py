@@ -73,6 +73,8 @@ def impute_column(train_data, test_data, impute_col, group_by_cols, m_values=[1,
     # Filter rows where target column value is present in the training dataset
     non_missing_data = train_data[train_data[impute_col].notna()]
     
+    # Ensure that the number of splits is not greater than the number of samples
+    n_splits = min(n_splits, len(non_missing_data))
     kf = KFold(n_splits=n_splits, shuffle=True)
     mean_mse_scores = []
 
